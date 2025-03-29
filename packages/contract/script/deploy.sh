@@ -9,6 +9,30 @@ source ../common/wallet.sh
 CONTRACT_PATH="src/Counter.sol:Counter"
 DEPLOY_FILE="out/deploy.txt"
 
+check_dependencies() {
+    echo -e "${BLUE}Checking system dependencies...${NC}"
+
+    missing_libs=()
+
+    for lib in "GLIBC_2.34" "GLIBC_2.32" "GLIBC_2.33" "CXXABI_1.3.13" "GLIBCXX_3.4.29"; do
+        if ! strings /lib/x86_64-linux-gnu/libc.so.6 | grep -q "$lib" && \
+           ! strings /usr/lib/x86_64-linux-gnu/libstdc++.so.6 | grep -q "$lib"; then
+            missing_libs+=("$lib")
+        fi
+    done
+
+    if [ ${#missing_libs[@]} -ne 0 ]; then
+        echo -e "${RED}Missing or outdated dependencies detected:${NC}"
+        for lib in "${missing_libs[@]}"; do
+            echo -e "${RED}- $lib${NC}"
+        done
+        echo -e "${RED}Please update your system libraries before proceeding.${NC}"
+        exit 1
+    else
+        echo -e "${GREEN}All dependencies are satisfied.${NC}"
+    fi
+}
+
 prelude() {
     echo -e "${BLUE}Deploy an encrypted contract in <1m.${NC}"
     echo -e "It's a Counter contract that only reveals the counter once it's >=5."
@@ -16,6 +40,7 @@ prelude() {
     read -r
 }
 
+check_dependencies
 prelude
 
 dev_wallet
