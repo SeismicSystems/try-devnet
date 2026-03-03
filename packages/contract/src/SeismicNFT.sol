@@ -13,6 +13,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract SeismicDiscordStat is ERC721URIStorage, Ownable {
     suint256 private _nextTokenId;
 
+    // ── Track each address's current token (0 = none) ────────────
+    mapping(address => uint256) private _currentToken;
+
     // ── Shielded trait storage (encrypted on-chain) ──────────────
     // Mapping from tokenId => each shielded trait
     mapping(uint256 => suint256) private _artCount;
@@ -43,25 +46,39 @@ contract SeismicDiscordStat is ERC721URIStorage, Ownable {
 
     // ── Mint ─────────────────────────────────────────────────────
     /// @notice Mint a Discord Stat NFT with encrypted traits.
-    /// @param to        Recipient address.
+    ///         Anyone can call this. Each address may only hold ONE NFT.
+    ///         If the caller already owns an NFT, it is burned first.
+    /// @param uri       Token metadata URI (IPFS link).
     /// @param art       Number of art submissions (will be encrypted).
     /// @param tweet     Number of tweets (will be encrypted).
     /// @param chat      Number of chat messages (will be encrypted).
     /// @param role      Highest role level (will be encrypted).
     function mint(
-        address to,
         string memory uri,
         suint256 art,
         suint256 tweet,
         suint256 chat,
         suint256 role
-    ) public onlyOwner {
+    ) public {
+        // If the caller already has an NFT, burn it first
+        uint256 existingTokenId = _currentToken[msg.sender];
+        if (existingTokenId != 0) {
+            // Clear shielded traits of the old token
+            delete _artCount[existingTokenId];
+            delete _tweetCount[existingTokenId];
+            delete _chatCount[existingTokenId];
+            delete _highestRole[existingTokenId];
+
+            // Burn the old token
+            _burn(existingTokenId);
+        }
+
+        // Mint new token
         suint256 tokenId = _nextTokenId;
         uint256 plainTokenId = uint256(tokenId);
-
         _nextTokenId = _nextTokenId + suint256(1);
 
-        _safeMint(to, plainTokenId);
+        _safeMint(msg.sender, plainTokenId);
         _setTokenURI(plainTokenId, uri);
 
         // Store encrypted traits
@@ -70,7 +87,10 @@ contract SeismicDiscordStat is ERC721URIStorage, Ownable {
         _chatCount[plainTokenId] = chat;
         _highestRole[plainTokenId] = role;
 
-        emit StatMinted(to, plainTokenId);
+        // Track this token as the caller's current NFT
+        _currentToken[msg.sender] = plainTokenId;
+
+        emit StatMinted(msg.sender, plainTokenId);
     }
 
     // ── Shielded Reads (owner-only via msg.sender) ──────────────

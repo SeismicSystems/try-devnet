@@ -183,7 +183,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="nft-card__media" style={{ margin: "20px auto", maxWidth: "400px", borderRadius: "8px", overflow: "hidden", border: "1px solid var(--border-color)", backgroundColor: "var(--card-bg)" }}>
+          <div className="nft-card__media">
             {metadata?.animation_url ? (
               <video
                 src={metadata.animation_url}
@@ -192,18 +192,16 @@ export default function Home() {
                 muted
                 playsInline
                 controls
-                style={{ width: "100%", display: "block", aspectRatio: "1/1", objectFit: "cover" }}
                 poster={metadata.image}
               />
             ) : metadata?.image ? (
               <img
                 src={metadata.image}
                 alt="NFT Media"
-                style={{ width: "100%", display: "block", aspectRatio: "1/1", objectFit: "cover" }}
               />
             ) : (
-              <div style={{ width: "100%", aspectRatio: "1/1", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-secondary)", backgroundColor: "var(--bg-secondary)" }}>
-                No Media Available
+              <div style={{ width: "100%", aspectRatio: "16/9", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-secondary)", backgroundColor: "rgba(0,0,0,0.5)" }}>
+                Retrieving media...
               </div>
             )}
           </div>
