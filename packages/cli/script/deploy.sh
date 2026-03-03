@@ -11,14 +11,14 @@ if [ -f "$ROOT_DIR/.env" ]; then
     source "$ROOT_DIR/.env"
 fi
 
-CONTRACT_PATH="src/SeismicNFT.sol:SeismicNFT"
+CONTRACT_PATH="src/SeismicNFT.sol:SeismicDiscordStat"
 
 if [ -z "$MNEMONIC" ]; then
   echo "Missing MNEMONIC in .env" >&2
   exit 1
 fi
 
-echo "Deploying SeismicNFT with Mnemonic..."
+echo "Deploying SeismicDiscordStat with Mnemonic..."
 
 cd "$ROOT_DIR/packages/contract"
 
