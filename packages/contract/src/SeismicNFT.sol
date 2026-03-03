@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title Seismic Discord Stat NFT
@@ -9,7 +10,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 ///         Traits (art, tweet, chat, highestRole) are encrypted using Seismic's
 ///         shielded types (suint256) and can only be read by the NFT owner
 ///         via a signed read (msg.sender == ownerOf(tokenId)).
-contract SeismicDiscordStat is ERC721, Ownable {
+contract SeismicDiscordStat is ERC721URIStorage, Ownable {
     suint256 private _nextTokenId;
 
     // ── Shielded trait storage (encrypted on-chain) ──────────────
@@ -27,6 +28,7 @@ contract SeismicDiscordStat is ERC721, Ownable {
 
         // Auto-mint 1 example NFT to deployer with sample stats
         _safeMint(msg.sender, 1);
+        _setTokenURI(1, "https://gateway.pinata.cloud/ipfs/QmZg5tHovzDnZPBa11iWSkv4GqSPqrEBVtUGmAq5FCxAbi");
         _artCount[1] = suint256(10);
         _tweetCount[1] = suint256(25);
         _chatCount[1] = suint256(100);
@@ -48,6 +50,7 @@ contract SeismicDiscordStat is ERC721, Ownable {
     /// @param role      Highest role level (will be encrypted).
     function mint(
         address to,
+        string memory uri,
         suint256 art,
         suint256 tweet,
         suint256 chat,
@@ -59,6 +62,7 @@ contract SeismicDiscordStat is ERC721, Ownable {
         _nextTokenId = _nextTokenId + suint256(1);
 
         _safeMint(to, plainTokenId);
+        _setTokenURI(plainTokenId, uri);
 
         // Store encrypted traits
         _artCount[plainTokenId] = art;
