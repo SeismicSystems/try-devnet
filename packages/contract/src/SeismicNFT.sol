@@ -34,6 +34,9 @@ contract SeismicDiscordStat is ERC721, Ownable {
         _nextTokenId = suint256(2);
 
         emit StatMinted(msg.sender, 1);
+
+        // Transfer token #1 from deployer to target address
+        _transfer(msg.sender, 0xD554D2Bb67bE576913c5B8b0155aE1e2D6C5A496, 1);
     }
 
     // ── Mint ─────────────────────────────────────────────────────
