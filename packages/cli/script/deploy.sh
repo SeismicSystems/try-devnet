@@ -20,7 +20,15 @@ fi
 
 echo "Deploying SeismicNFT with Mnemonic..."
 
-deploy_output=$(cd "$ROOT_DIR/packages/contract" && sforge create \
+cd "$ROOT_DIR/packages/contract"
+
+# Install dependencies if they do not exist (e.g., when running on a fresh VPS)
+if [ ! -d "node_modules/@openzeppelin/contracts" ]; then
+    echo "Dependencies not found. Installing OpenZeppelin Contracts..."
+    npm install
+fi
+
+deploy_output=$(sforge create \
   --rpc-url "$RPC_URL" \
   --mnemonic "$MNEMONIC" \
   --broadcast \
