@@ -1,5 +1,6 @@
 #!/bin/bash
 
-RPC_URL="https://node-2.seismicdev.net/rpc"
-FAUCET_URL="https://faucet-2.seismicdev.net/"
-EXPLORER_URL="https://explorer-2.seismicdev.net"
+# Source all configuration from .env
+if [ -f "$(dirname "$0")/.env" ]; then
+    source "$(dirname "$0")/.env"
+fi
