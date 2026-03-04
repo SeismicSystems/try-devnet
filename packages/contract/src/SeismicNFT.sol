@@ -93,6 +93,12 @@ contract SeismicDiscordStat is ERC721URIStorage, Ownable {
         emit StatMinted(msg.sender, plainTokenId);
     }
 
+    // ── Public Reads ────────────────────────────────────────────
+    /// @notice Get the current token ID owned by an address. Returns 0 if none.
+    function getTokenId(address owner) public view returns (uint256) {
+        return _currentToken[owner];
+    }
+
     // ── Shielded Reads (owner-only via msg.sender) ──────────────
     // These functions use msg.sender to verify the caller is the NFT owner.
     // On Seismic, a "signed read" proves identity, so only the real owner

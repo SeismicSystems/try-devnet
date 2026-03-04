@@ -82,8 +82,14 @@ export const SEISMIC_DISCORD_STAT_ABI = [
         type: "function",
     },
     {
+        inputs: [{ name: "owner", type: "address" }],
+        name: "getTokenId",
+        outputs: [{ name: "", type: "uint256" }],
+        stateMutability: "view",
+        type: "function",
+    },
+    {
         inputs: [
-            { name: "to", type: "address" },
             { name: "uri", type: "string" },
             { name: "art", type: "suint256" },
             { name: "tweet", type: "suint256" },

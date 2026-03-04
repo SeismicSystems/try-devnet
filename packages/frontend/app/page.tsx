@@ -2,37 +2,94 @@
 
 import { useState, useEffect } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useReadContract } from "wagmi";
+import { useReadContract, usePublicClient } from "wagmi";
 import { useShieldedWallet, useSignedReadContract } from "seismic-react";
 import { SEISMIC_DISCORD_STAT_ABI } from "./lib/abi";
 import { CONTRACT_ADDRESS } from "./lib/config";
 
 const ROLE_NAMES: Record<number, string> = {
-  1: "Member",
-  2: "Active",
-  3: "Contributor",
-  4: "Moderator",
-  5: "Admin",
-  6: "Owner",
+  1: "Magnitude 1",
+  2: "Magnitude 2",
+  3: "Magnitude 3",
+  4: "Magnitude 4",
+  5: "Magnitude 5",
+  6: "Magnitude 6",
+  7: "Magnitude 7",
+  8: "Magnitude 8",
+  9: "Magnitude 9",
+
 };
 
 export default function Home() {
-  const [tokenId, setTokenId] = useState("1");
   const { address } = useShieldedWallet();
+  const publicClient = usePublicClient();
+
+  const [tokenId, setTokenId] = useState("0");
+  const [isFindingNFT, setIsFindingNFT] = useState(false);
+
+  useEffect(() => {
+    if (!address || !publicClient) {
+      setTokenId("0");
+      return;
+    }
+
+    let isMounted = true;
+    const findHighestToken = async () => {
+      setIsFindingNFT(true);
+      let highestOwned = 0;
+
+      try {
+        // Find highest Token ID owned by the user
+        // We evaluate a fixed window (e.g. 1-20) instead of breaking on error (since some tokens might be burned resulting in gaps)
+        for (let i = 1; i <= 20; i++) {
+          try {
+            const owner = await publicClient.readContract({
+              address: CONTRACT_ADDRESS,
+              abi: SEISMIC_DISCORD_STAT_ABI,
+              functionName: "ownerOf",
+              args: [BigInt(i)],
+            });
+            if (owner === address) {
+              highestOwned = i;
+            }
+          } catch (err) {
+            // Revert usually means the token doesn't exist yet or is burned, 
+            // but we shouldn't break because there might be a higher token index further ahead
+            continue;
+          }
+        }
+      } catch (err) {
+        console.error("Error searching for token:", err);
+      }
+
+      if (isMounted) {
+        setTokenId(highestOwned.toString());
+        setIsFindingNFT(false);
+      }
+    };
+
+    findHighestToken();
+
+    return () => { isMounted = false; };
+  }, [address, publicClient]);
+
+  const hasToken = tokenId !== "0";
 
   // Public read for owner directly using wagmi
   const { data: owner } = useReadContract({
     abi: SEISMIC_DISCORD_STAT_ABI,
     address: CONTRACT_ADDRESS,
     functionName: "ownerOf",
-    args: [BigInt(tokenId || 1)],
+    args: hasToken ? [BigInt(tokenId)] : undefined,
+    query: { enabled: hasToken }
   });
 
   const { data: tokenURI } = useReadContract({
     abi: SEISMIC_DISCORD_STAT_ABI,
     address: CONTRACT_ADDRESS,
     functionName: "tokenURI",
-    args: [BigInt(tokenId || 1)],
+    args: hasToken ? [BigInt(tokenId)] : undefined,
+    query: { enabled: hasToken }
   });
 
   // Signed read for stats using seismic-react
@@ -44,7 +101,7 @@ export default function Home() {
     abi: SEISMIC_DISCORD_STAT_ABI,
     address: CONTRACT_ADDRESS,
     functionName: "getStats",
-    args: [BigInt(tokenId || 1)],
+    args: hasToken ? [BigInt(tokenId)] : undefined,
   });
 
   const [stats, setStats] = useState<{
@@ -62,6 +119,7 @@ export default function Home() {
   const [metadata, setMetadata] = useState<{
     image?: string;
     animation_url?: string;
+    error?: boolean;
   } | null>(null);
 
   useEffect(() => {
@@ -71,11 +129,16 @@ export default function Home() {
     }
     const fetchMetadata = async () => {
       try {
-        const res = await fetch(tokenURI as string);
+        let uri = tokenURI as string;
+        if (uri.startsWith("ipfs://")) {
+          uri = uri.replace("ipfs://", "https://ipfs.io/ipfs/");
+        }
+        const res = await fetch(uri);
         const data = await res.json();
         setMetadata(data);
       } catch (e) {
         console.error("Failed to fetch metadata:", e);
+        setMetadata({ error: true });
       }
     };
     fetchMetadata();
@@ -113,39 +176,41 @@ export default function Home() {
   return (
     <div className="app-container">
       {/* Header */}
-      <header className="header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <div style={{ alignSelf: 'flex-end', marginBottom: '20px' }}>
+      <header className="header">
+        <div className="header__content">
+          <div className="header__badge">Seismic Testnet</div>
+          <h1 className="header__title">Discord Stat NFT</h1>
+          <p className="header__subtitle">
+            View your encrypted Discord activity traits. Only the NFT owner can
+            decrypt and reveal the shielded on-chain data.
+          </p>
+        </div>
+        <div className="header__actions">
           <ConnectButton />
         </div>
-        <div className="header__badge">Seismic Testnet</div>
-        <h1 className="header__title">Discord Stat NFT</h1>
-        <p className="header__subtitle">
-          View your encrypted Discord activity traits. Only the NFT owner can
-          decrypt and reveal the shielded on-chain data.
-        </p>
       </header>
 
       {/* Connect Panel */}
       <section className="connect-panel">
-        <h2 className="connect-panel__title">🔐 Authenticate & Decrypt</h2>
+        <h2 className="connect-panel__title">Authentication</h2>
 
         {!address ? (
           <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-secondary)' }}>
             Please connect your wallet to decrypt NFT traits.
           </div>
+        ) : isFindingNFT ? (
+          <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-secondary)' }}>
+            <span className="spinner" /> Scanning your wallet for Discord Stat NFTs...
+          </div>
+        ) : !hasToken ? (
+          <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-secondary)' }}>
+            It looks like you don't own a Discord Stat NFT on this wallet.
+          </div>
         ) : (
           <div className="input-row">
-            <div className="input-group" style={{ marginBottom: 0 }}>
-              <label htmlFor="tokenId">Token ID</label>
-              <input
-                id="tokenId"
-                type="number"
-                className="input-field"
-                placeholder="1"
-                value={tokenId}
-                onChange={(e) => setTokenId(e.target.value)}
-                min="1"
-              />
+            <div className="input-group" style={{ marginBottom: 0, flexDirection: "row", alignItems: "center", gap: "12px", border: "1px solid var(--border-color)", padding: "10px 15px" }}>
+              <span style={{ color: "var(--text-secondary)" }}>Detected Token ID:</span>
+              <strong style={{ fontSize: "1.1rem" }}>#{tokenId}</strong>
             </div>
             <button
               className="btn-primary"
@@ -154,10 +219,10 @@ export default function Home() {
             >
               {isDecrypting ? (
                 <>
-                  <span className="spinner" /> Decrypting via Wallet...
+                  <span className="spinner" /> Decrypting
                 </>
               ) : (
-                "🔓 Sign to Decrypt"
+                "Sign to Decrypt"
               )}
             </button>
           </div>
@@ -184,23 +249,32 @@ export default function Home() {
           </div>
 
           <div className="nft-card__media">
-            {metadata?.animation_url ? (
-              <video
-                src={metadata.animation_url}
-                autoPlay
-                loop
-                muted
-                playsInline
-                controls
-                poster={metadata.image}
-              />
-            ) : metadata?.image ? (
-              <img
-                src={metadata.image}
-                alt="NFT Media"
-              />
+            {metadata ? (
+              metadata.error ? (
+                <div style={{ width: "100%", aspectRatio: "16/9", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-secondary)", backgroundColor: "var(--bg-primary)" }}>
+                  Failed to load media
+                </div>
+              ) : metadata.animation_url ? (
+                <video
+                  src={metadata.animation_url.startsWith("ipfs://") ? metadata.animation_url.replace("ipfs://", "https://ipfs.io/ipfs/") : metadata.animation_url}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                />
+              ) : metadata.image ? (
+                <img
+                  src={metadata.image.startsWith("ipfs://") ? metadata.image.replace("ipfs://", "https://ipfs.io/ipfs/") : metadata.image}
+                  alt="NFT Media"
+                />
+              ) : (
+                <div style={{ width: "100%", aspectRatio: "16/9", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-secondary)", backgroundColor: "var(--bg-primary)" }}>
+                  No media available
+                </div>
+              )
             ) : (
-              <div style={{ width: "100%", aspectRatio: "16/9", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-secondary)", backgroundColor: "rgba(0,0,0,0.5)" }}>
+              <div style={{ width: "100%", aspectRatio: "16/9", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-secondary)", backgroundColor: "var(--bg-primary)" }}>
                 Retrieving media...
               </div>
             )}
@@ -212,28 +286,24 @@ export default function Home() {
             </div>
             <div className="trait-grid">
               <div className="trait-item">
-                <div className="trait-item__icon">🎨</div>
                 <div className="trait-item__label">Art Submissions</div>
                 <div className="trait-item__value">
                   {stats.art.toString()}
                 </div>
               </div>
               <div className="trait-item">
-                <div className="trait-item__icon">🐦</div>
                 <div className="trait-item__label">Tweets</div>
                 <div className="trait-item__value">
                   {stats.tweet.toString()}
                 </div>
               </div>
               <div className="trait-item">
-                <div className="trait-item__icon">💬</div>
                 <div className="trait-item__label">Chat Messages</div>
                 <div className="trait-item__value">
                   {stats.chat.toString()}
                 </div>
               </div>
               <div className="trait-item">
-                <div className="trait-item__icon">👑</div>
                 <div className="trait-item__label">Highest Role</div>
                 <div className="trait-item__value">
                   {ROLE_NAMES[Number(stats.role)] || `Level ${stats.role.toString()}`}
@@ -241,7 +311,7 @@ export default function Home() {
               </div>
             </div>
             <div className="encrypted-badge">
-              🔒 All traits are stored encrypted (suint256) on Seismic
+              All traits are stored encrypted (suint256) on Seismic
             </div>
           </div>
         </section>

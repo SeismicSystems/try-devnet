@@ -24,4 +24,4 @@ export const seismicTestnet = defineChain({
 
 // Replace with your deployed contract address
 export const CONTRACT_ADDRESS =
-    "0xed925B16561d3E619dc3433Ea6e47A760d2EC657" as const;
+    "0x143bf3d6f430c1c993e296a424a551eb29b6e4a5" as const;
