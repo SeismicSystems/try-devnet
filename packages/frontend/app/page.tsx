@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useReadContract, usePublicClient } from "wagmi";
 import { useShieldedWallet, useSignedReadContract } from "seismic-react";
@@ -144,25 +144,6 @@ export default function Home() {
     fetchMetadata();
   }, [tokenURI]);
 
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  const handleVideoEnded = () => {
-    if (videoRef.current) {
-      videoRef.current.playbackRate = -1;
-      videoRef.current.play();
-    }
-  };
-
-  const handleTimeUpdate = () => {
-    if (videoRef.current) {
-      const v = videoRef.current;
-      if (v.playbackRate < 0 && v.currentTime <= 0.05) {
-        v.playbackRate = 1;
-        v.play();
-      }
-    }
-  };
-
   const handleDecrypt = async () => {
     setStats(null);
     setDecryptStatus(null);
@@ -273,21 +254,11 @@ export default function Home() {
                 <div style={{ width: "100%", aspectRatio: "16/9", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-secondary)", backgroundColor: "var(--bg-primary)" }}>
                   Failed to load media
                 </div>
-              ) : metadata.animation_url ? (
-                <video
-                  ref={videoRef}
-                  src={metadata.animation_url.startsWith("ipfs://") ? metadata.animation_url.replace("ipfs://", "https://ipfs.io/ipfs/") : metadata.animation_url}
-                  autoPlay
-                  muted
-                  playsInline
-                  onEnded={handleVideoEnded}
-                  onTimeUpdate={handleTimeUpdate}
-                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                />
               ) : metadata.image ? (
                 <img
                   src={metadata.image.startsWith("ipfs://") ? metadata.image.replace("ipfs://", "https://ipfs.io/ipfs/") : metadata.image}
                   alt="NFT Media"
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                 />
               ) : (
                 <div style={{ width: "100%", aspectRatio: "16/9", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-secondary)", backgroundColor: "var(--bg-primary)" }}>
