@@ -22,11 +22,9 @@ contract SeismicDiscordStat is ERC721URIStorage, Ownable {
     mapping(uint256 => suint256) private _tweetCount;
     mapping(uint256 => suint256) private _chatCount;
     mapping(uint256 => suint256) private _highestRole;
-    mapping(uint256 => suint256) private _luckyScore;
 
     // ── Events ───────────────────────────────────────────────────
     event StatMinted(address indexed to, uint256 indexed tokenId);
-    event EncryptedMintEvent(bytes encryptedData);
 
     constructor() ERC721("Seismic Discord Stat", "SDS") Ownable(msg.sender) {
         _nextTokenId = suint256(1);
@@ -38,7 +36,6 @@ contract SeismicDiscordStat is ERC721URIStorage, Ownable {
         _tweetCount[1] = suint256(25);
         _chatCount[1] = suint256(100);
         _highestRole[1] = suint256(5);
-        _luckyScore[1] = suint256(77); // Default lucky score
         _nextTokenId = suint256(2);
 
         emit StatMinted(msg.sender, 1);
@@ -71,7 +68,6 @@ contract SeismicDiscordStat is ERC721URIStorage, Ownable {
             delete _tweetCount[existingTokenId];
             delete _chatCount[existingTokenId];
             delete _highestRole[existingTokenId];
-            delete _luckyScore[existingTokenId];
 
             // Burn the old token
             _burn(existingTokenId);
@@ -91,35 +87,10 @@ contract SeismicDiscordStat is ERC721URIStorage, Ownable {
         _chatCount[plainTokenId] = chat;
         _highestRole[plainTokenId] = role;
 
-        // --- 1. Random Precompile (0x64) ---
-        // Generates a true random number on-chain securely
-        (bool rngSuccess, bytes memory randomBytes) = address(0x64).staticcall(abi.encode(32));
-        if (rngSuccess && randomBytes.length > 0) {
-            uint256 randomNum = (uint256(bytes32(randomBytes)) % 100) + 1;
-            _luckyScore[plainTokenId] = suint256(randomNum);
-        } else {
-            _luckyScore[plainTokenId] = suint256(50); // Fallback if precompile fails
-        }
-
         // Track this token as the caller's current NFT
         _currentToken[msg.sender] = plainTokenId;
 
         emit StatMinted(msg.sender, plainTokenId);
-
-        // --- 2. AES-GCM Encrypt Precompile (0x66) ---
-        // Encrypts the mint details before emitting an event to ensure privacy
-        bytes32 secretKey = keccak256("seismic-secret-key");
-        uint256 nonce = 1;
-        bytes memory dataToEncrypt = abi.encodePacked(msg.sender, plainTokenId);
-        
-        // Use staticcall to avoid reverting the entire transaction if the precompile format expects different args
-        (bool encSuccess, bytes memory encryptedData) = address(0x66).staticcall(
-            abi.encode(secretKey, nonce, dataToEncrypt)
-        );
-        
-        if (encSuccess && encryptedData.length > 0) {
-            emit EncryptedMintEvent(encryptedData);
-        }
     }
 
     // ── Public Reads ────────────────────────────────────────────
@@ -155,12 +126,6 @@ contract SeismicDiscordStat is ERC721URIStorage, Ownable {
     function getHighestRole(uint256 tokenId) public view returns (uint256) {
         require(ownerOf(tokenId) == msg.sender, "Not the owner");
         return uint256(_highestRole[tokenId]);
-    }
-
-    /// @notice Get luckily generated score for a token. Only the NFT owner can read this.
-    function getLuckyScore(uint256 tokenId) public view returns (uint256) {
-        require(ownerOf(tokenId) == msg.sender, "Not the owner");
-        return uint256(_luckyScore[tokenId]);
     }
 
     /// @notice Get ALL stats for a token in one call. Only the NFT owner can read this.
