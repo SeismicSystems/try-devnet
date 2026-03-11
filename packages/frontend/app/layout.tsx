@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Seismic — Shielded NFT & sETH Vault",
+  title: "Seismic Shielded NFT & sETH Vault",
   description:
     "View encrypted Discord stat traits and manage shielded ETH (sETH). Powered by Seismic Network.",
 };
