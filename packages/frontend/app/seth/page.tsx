@@ -50,7 +50,7 @@ export default function SethPage() {
     );
     const [txStatus, setTxStatus] = useState<{
         type: "success" | "error" | "pending";
-        message: string;
+        message: React.ReactNode;
     } | null>(null);
 
     // ── Public Reads ───────────────────────────────────────────
@@ -117,13 +117,30 @@ export default function SethPage() {
             });
 
             if (publicClient) {
-                setTxStatus({ type: "pending", message: `Tx submitted. Waiting for confirmation: ${hash.slice(0, 10)}...` });
+                setTxStatus({
+                    type: "pending",
+                    message: (
+                        <>
+                            Tx submitted. Waiting for confirmation:{" "}
+                            <a href={`https://seismic-testnet.socialscan.io/tx/${hash}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', color: 'inherit' }}>
+                                {hash.slice(0, 10)}...
+                            </a>
+                        </>
+                    )
+                });
                 await publicClient.waitForTransactionReceipt({ hash });
             }
 
             setTxStatus({
                 type: "success",
-                message: `Deposited ${depositAmount} ETH → sETH. Tx: ${hash.slice(0, 10)}...`,
+                message: (
+                    <>
+                        Deposited {depositAmount} ETH → sETH. Tx:{" "}
+                        <a href={`https://seismic-testnet.socialscan.io/tx/${hash}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', color: 'inherit' }}>
+                            {hash.slice(0, 10)}...
+                        </a>
+                    </>
+                )
             });
             setDepositAmount("");
             refetchSupply();
@@ -158,13 +175,30 @@ export default function SethPage() {
             });
 
             if (publicClient) {
-                setTxStatus({ type: "pending", message: `Tx submitted. Waiting for confirmation: ${hash.slice(0, 10)}...` });
+                setTxStatus({
+                    type: "pending",
+                    message: (
+                        <>
+                            Tx submitted. Waiting for confirmation:{" "}
+                            <a href={`https://seismic-testnet.socialscan.io/tx/${hash}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', color: 'inherit' }}>
+                                {hash.slice(0, 10)}...
+                            </a>
+                        </>
+                    )
+                });
                 await publicClient.waitForTransactionReceipt({ hash });
             }
 
             setTxStatus({
                 type: "success",
-                message: `Transferred ${transferAmount} sETH. Tx: ${hash.slice(0, 10)}...`,
+                message: (
+                    <>
+                        Transferred {transferAmount} sETH. Tx:{" "}
+                        <a href={`https://seismic-testnet.socialscan.io/tx/${hash}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', color: 'inherit' }}>
+                            {hash.slice(0, 10)}...
+                        </a>
+                    </>
+                )
             });
             setTransferTo("");
             setTransferAmount("");
@@ -194,13 +228,30 @@ export default function SethPage() {
             });
 
             if (publicClient) {
-                setTxStatus({ type: "pending", message: `Tx submitted. Waiting for confirmation: ${hash.slice(0, 10)}...` });
+                setTxStatus({
+                    type: "pending",
+                    message: (
+                        <>
+                            Tx submitted. Waiting for confirmation:{" "}
+                            <a href={`https://seismic-testnet.socialscan.io/tx/${hash}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', color: 'inherit' }}>
+                                {hash.slice(0, 10)}...
+                            </a>
+                        </>
+                    )
+                });
                 await publicClient.waitForTransactionReceipt({ hash });
             }
 
             setTxStatus({
                 type: "success",
-                message: `Redeemed ${redeemAmount} sETH → ETH. Tx: ${hash.slice(0, 10)}...`,
+                message: (
+                    <>
+                        Redeemed {redeemAmount} sETH → ETH. Tx:{" "}
+                        <a href={`https://seismic-testnet.socialscan.io/tx/${hash}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', color: 'inherit' }}>
+                            {hash.slice(0, 10)}...
+                        </a>
+                    </>
+                )
             });
             setRedeemTo("");
             setRedeemAmount("");
