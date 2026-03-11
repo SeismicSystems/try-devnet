@@ -18,7 +18,7 @@ if [ -z "$MNEMONIC" ]; then
   exit 1
 fi
 
-echo "Deploying ShieldedETH with Mnemonic..."
+echo "Deploying ShieldedETH (SRC-20) with 0.01 ETH initial liquidity..."
 
 cd "$ROOT_DIR/packages/contract"
 
@@ -32,6 +32,7 @@ deploy_output=$(sforge create \
   --rpc-url "$RPC_URL" \
   --mnemonic "$MNEMONIC" \
   --broadcast \
+  --value 10000000000000000 \
   "$CONTRACT_PATH")
 
 contract_address=$(echo "$deploy_output" | awk '/Deployed to:/ {print $3}')
@@ -46,3 +47,7 @@ cat <<EOF
   "contractLink": "$EXPLORER_URL/address/$contract_address"
 }
 EOF
+
+echo ""
+echo ">> Update SETH_CONTRACT_ADDRESS in packages/frontend/app/lib/config.ts"
+echo ">> with: $contract_address"

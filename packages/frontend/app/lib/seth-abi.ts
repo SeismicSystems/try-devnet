@@ -1,10 +1,30 @@
 export const SHIELDED_ETH_ABI = [
     {
         inputs: [],
-        stateMutability: "nonpayable",
+        stateMutability: "payable",
         type: "constructor",
     },
     // ── Events ───────────────────────────────────────────────
+    {
+        anonymous: false,
+        inputs: [
+            { indexed: true, name: "from", type: "address" },
+            { indexed: true, name: "to", type: "address" },
+            { indexed: false, name: "amount", type: "suint256" },
+        ],
+        name: "Transfer",
+        type: "event",
+    },
+    {
+        anonymous: false,
+        inputs: [
+            { indexed: true, name: "owner", type: "address" },
+            { indexed: true, name: "spender", type: "address" },
+            { indexed: false, name: "amount", type: "suint256" },
+        ],
+        name: "Approval",
+        type: "event",
+    },
     {
         anonymous: false,
         inputs: [
@@ -24,16 +44,7 @@ export const SHIELDED_ETH_ABI = [
         name: "Redeem",
         type: "event",
     },
-    {
-        anonymous: false,
-        inputs: [
-            { indexed: true, name: "from", type: "address" },
-            { indexed: true, name: "to", type: "address" },
-        ],
-        name: "Transfer",
-        type: "event",
-    },
-    // ── Write Functions ──────────────────────────────────────
+    // ── SRC-20 Write Functions ───────────────────────────────
     {
         inputs: [],
         name: "deposit",
@@ -47,7 +58,28 @@ export const SHIELDED_ETH_ABI = [
             { name: "amount", type: "suint256" },
         ],
         name: "transfer",
-        outputs: [],
+        outputs: [{ name: "", type: "bool" }],
+        stateMutability: "nonpayable",
+        type: "function",
+    },
+    {
+        inputs: [
+            { name: "spender", type: "address" },
+            { name: "amount", type: "suint256" },
+        ],
+        name: "approve",
+        outputs: [{ name: "", type: "bool" }],
+        stateMutability: "nonpayable",
+        type: "function",
+    },
+    {
+        inputs: [
+            { name: "from", type: "address" },
+            { name: "to", type: "address" },
+            { name: "amount", type: "suint256" },
+        ],
+        name: "transferFrom",
+        outputs: [{ name: "", type: "bool" }],
         stateMutability: "nonpayable",
         type: "function",
     },
@@ -61,14 +93,22 @@ export const SHIELDED_ETH_ABI = [
         stateMutability: "nonpayable",
         type: "function",
     },
-    // ── Read Functions ───────────────────────────────────────
+    // ── SRC-20 Read Functions (signed reads) ─────────────────
     {
         inputs: [],
-        name: "getBalance",
+        name: "balanceOf",
         outputs: [{ name: "", type: "uint256" }],
         stateMutability: "view",
         type: "function",
     },
+    {
+        inputs: [{ name: "spender", type: "address" }],
+        name: "allowance",
+        outputs: [{ name: "", type: "uint256" }],
+        stateMutability: "view",
+        type: "function",
+    },
+    // ── Public Read Functions ────────────────────────────────
     {
         inputs: [],
         name: "totalSupply",

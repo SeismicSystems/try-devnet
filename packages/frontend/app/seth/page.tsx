@@ -6,7 +6,6 @@ import { useReadContract, usePublicClient } from "wagmi";
 import {
     useShieldedWallet,
     useSignedReadContract,
-    useShieldedWriteContract,
 } from "seismic-react";
 import { SHIELDED_ETH_ABI } from "../lib/seth-abi";
 import { SETH_CONTRACT_ADDRESS } from "../lib/config";
@@ -69,49 +68,30 @@ export default function SethPage() {
         }
     }, [readBalance]);
 
-    // ── Shielded Writes ────────────────────────────────────────
-    const {
-        writeContract: writeDeposit,
-        isLoading: isDepositing,
-    } = useShieldedWriteContract({
-        address: SETH_CONTRACT_ADDRESS,
-        abi: SHIELDED_ETH_ABI,
-        functionName: "deposit",
-    });
-
-    const {
-        writeContract: writeTransfer,
-        isLoading: isTransferring,
-    } = useShieldedWriteContract({
-        address: SETH_CONTRACT_ADDRESS,
-        abi: SHIELDED_ETH_ABI,
-        functionName: "transfer",
-    });
-
-    const {
-        writeContract: writeRedeem,
-        isLoading: isRedeeming,
-    } = useShieldedWriteContract({
-        address: SETH_CONTRACT_ADDRESS,
-        abi: SHIELDED_ETH_ABI,
-        functionName: "redeem",
-    });
+    // ── Shielded Writes (via walletClient directly) ────────────
+    const { walletClient } = useShieldedWallet();
+    const [isDepositing, setIsDepositing] = useState(false);
+    const [isTransferring, setIsTransferring] = useState(false);
+    const [isRedeeming, setIsRedeeming] = useState(false);
 
     // ── Handlers ───────────────────────────────────────────────
     const handleDeposit = async () => {
-        if (!depositAmount || parseFloat(depositAmount) <= 0) return;
+        if (!depositAmount || parseFloat(depositAmount) <= 0 || !walletClient) return;
         setTxStatus({ type: "pending", message: "Sending deposit transaction..." });
+        setIsDepositing(true);
 
         try {
-            await writeDeposit({
+            const hash = await walletClient.writeContract({
+                address: SETH_CONTRACT_ADDRESS,
+                abi: SHIELDED_ETH_ABI,
+                functionName: "deposit",
                 value: parseEther(depositAmount),
             });
             setTxStatus({
                 type: "success",
-                message: `Successfully deposited ${depositAmount} ETH → sETH`,
+                message: `Deposited ${depositAmount} ETH → sETH. Tx: ${hash.slice(0, 10)}...`,
             });
             setDepositAmount("");
-            // Refresh data
             refetchSupply();
             refetchContractBal();
             if (userBalance !== null) handleReadBalance();
@@ -121,24 +101,30 @@ export default function SethPage() {
                 type: "error",
                 message: err instanceof Error ? err.message : "Deposit failed",
             });
+        } finally {
+            setIsDepositing(false);
         }
     };
 
     const handleTransfer = async () => {
-        if (!transferTo || !transferAmount || parseFloat(transferAmount) <= 0)
+        if (!transferTo || !transferAmount || parseFloat(transferAmount) <= 0 || !walletClient)
             return;
         setTxStatus({
             type: "pending",
             message: "Sending shielded transfer...",
         });
+        setIsTransferring(true);
 
         try {
-            await writeTransfer({
+            const hash = await walletClient.writeContract({
+                address: SETH_CONTRACT_ADDRESS,
+                abi: SHIELDED_ETH_ABI,
+                functionName: "transfer",
                 args: [transferTo as `0x${string}`, parseEther(transferAmount)],
             });
             setTxStatus({
                 type: "success",
-                message: `Successfully transferred ${transferAmount} sETH`,
+                message: `Transferred ${transferAmount} sETH. Tx: ${hash.slice(0, 10)}...`,
             });
             setTransferTo("");
             setTransferAmount("");
@@ -149,20 +135,26 @@ export default function SethPage() {
                 type: "error",
                 message: err instanceof Error ? err.message : "Transfer failed",
             });
+        } finally {
+            setIsTransferring(false);
         }
     };
 
     const handleRedeem = async () => {
-        if (!redeemTo || !redeemAmount || parseFloat(redeemAmount) <= 0) return;
+        if (!redeemTo || !redeemAmount || parseFloat(redeemAmount) <= 0 || !walletClient) return;
         setTxStatus({ type: "pending", message: "Redeeming sETH → ETH..." });
+        setIsRedeeming(true);
 
         try {
-            await writeRedeem({
+            const hash = await walletClient.writeContract({
+                address: SETH_CONTRACT_ADDRESS,
+                abi: SHIELDED_ETH_ABI,
+                functionName: "redeem",
                 args: [redeemTo as `0x${string}`, parseEther(redeemAmount)],
             });
             setTxStatus({
                 type: "success",
-                message: `Successfully redeemed ${redeemAmount} sETH → ETH`,
+                message: `Redeemed ${redeemAmount} sETH → ETH. Tx: ${hash.slice(0, 10)}...`,
             });
             setRedeemTo("");
             setRedeemAmount("");
@@ -175,6 +167,8 @@ export default function SethPage() {
                 type: "error",
                 message: err instanceof Error ? err.message : "Redeem failed",
             });
+        } finally {
+            setIsRedeeming(false);
         }
     };
 
