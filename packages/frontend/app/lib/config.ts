@@ -28,4 +28,4 @@ export const CONTRACT_ADDRESS =
 
 // Replace with your deployed ShieldedETH contract address
 export const SETH_CONTRACT_ADDRESS =
-    "0x51c8F9b8047e9C5a7b5310415bF305d21B6208B6" as const;
+    "0x9F08509E2c65e9d58f1062819a20D96667c59473" as const;

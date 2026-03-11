@@ -2,11 +2,11 @@
 
 import { useState, useCallback } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useReadContract, usePublicClient } from "wagmi";
+import { useReadContract, usePublicClient, useBalance } from "wagmi";
 import {
     useShieldedWallet,
-    useSignedReadContract,
 } from "seismic-react";
+import { signedReadContract } from "seismic-viem";
 import { SHIELDED_ETH_ABI } from "../lib/seth-abi";
 import { SETH_CONTRACT_ADDRESS } from "../lib/config";
 import { parseEther, formatEther } from "viem";
@@ -14,6 +14,30 @@ import { parseEther, formatEther } from "viem";
 export default function SethPage() {
     const { address } = useShieldedWallet();
     const publicClient = usePublicClient();
+
+    // ── ETH Balance for Deposit ──────────────────────────────
+    const { data: ethBalanceData } = useBalance({
+        address: address as `0x${string}` | undefined,
+    });
+    const ethBalance = ethBalanceData?.value || BigInt(0);
+
+    const handlePercentage = (balance: bigint | null, percentage: number, setter: (val: string) => void, isEth: boolean = false) => {
+        if (!balance || balance === BigInt(0)) return;
+        let amount = (balance * BigInt(percentage)) / BigInt(100);
+
+        // Exclude a small gas buffer for "Max" ETH deposit
+        if (isEth && percentage === 100) {
+            const gasBuffer = parseEther("0.005"); // reserve 0.005 ETH for gas
+            if (amount > gasBuffer) {
+                amount -= gasBuffer;
+            } else {
+                amount = BigInt(0);
+            }
+        }
+
+        // Optional: truncate down so we don't spam long decimals, but formatEther is generally fine.
+        setter(formatEther(amount));
+    };
 
     // ── State ──────────────────────────────────────────────────
     const [depositAmount, setDepositAmount] = useState("");
@@ -43,33 +67,37 @@ export default function SethPage() {
     });
 
     // ── Signed Read: User Balance (shielded) ───────────────────
-    const {
-        read: readBalance,
-        isLoading: isReadingBalance,
-    } = useSignedReadContract({
-        abi: SHIELDED_ETH_ABI,
-        address: SETH_CONTRACT_ADDRESS,
-        functionName: "balanceOf",
-    });
+    const { walletClient } = useShieldedWallet();
 
     const [userBalance, setUserBalance] = useState<bigint | null>(null);
     const [balanceError, setBalanceError] = useState<string | null>(null);
+    const [isReadingBalance, setIsReadingBalance] = useState(false);
 
     const handleReadBalance = useCallback(async () => {
+        if (!walletClient) return;
+        setIsReadingBalance(true);
         setBalanceError(null);
         try {
-            const result = await readBalance();
+            const result = await signedReadContract(walletClient, {
+                abi: SHIELDED_ETH_ABI,
+                address: SETH_CONTRACT_ADDRESS,
+                functionName: "balanceOf",
+                // Crucial: override simulated gas. Default is 30M, causing node check to require ~0.036 ETH.
+                // 500,000 gas brings the req down to ~0.0006 ETH.
+                gas: BigInt(500000),
+            } as any);
             setUserBalance(result as bigint);
         } catch (err: unknown) {
             console.error("Read balance error:", err);
             setBalanceError(
                 err instanceof Error ? err.message : "Failed to read balance"
             );
+        } finally {
+            setIsReadingBalance(false);
         }
-    }, [readBalance]);
+    }, [walletClient]);
 
     // ── Shielded Writes (via walletClient directly) ────────────
-    const { walletClient } = useShieldedWallet();
     const [isDepositing, setIsDepositing] = useState(false);
     const [isTransferring, setIsTransferring] = useState(false);
     const [isRedeeming, setIsRedeeming] = useState(false);
@@ -87,6 +115,12 @@ export default function SethPage() {
                 functionName: "deposit",
                 value: parseEther(depositAmount),
             });
+
+            if (publicClient) {
+                setTxStatus({ type: "pending", message: `Tx submitted. Waiting for confirmation: ${hash.slice(0, 10)}...` });
+                await publicClient.waitForTransactionReceipt({ hash });
+            }
+
             setTxStatus({
                 type: "success",
                 message: `Deposited ${depositAmount} ETH → sETH. Tx: ${hash.slice(0, 10)}...`,
@@ -122,6 +156,12 @@ export default function SethPage() {
                 functionName: "transfer",
                 args: [transferTo as `0x${string}`, parseEther(transferAmount)],
             });
+
+            if (publicClient) {
+                setTxStatus({ type: "pending", message: `Tx submitted. Waiting for confirmation: ${hash.slice(0, 10)}...` });
+                await publicClient.waitForTransactionReceipt({ hash });
+            }
+
             setTxStatus({
                 type: "success",
                 message: `Transferred ${transferAmount} sETH. Tx: ${hash.slice(0, 10)}...`,
@@ -152,6 +192,12 @@ export default function SethPage() {
                 functionName: "redeem",
                 args: [redeemTo as `0x${string}`, parseEther(redeemAmount)],
             });
+
+            if (publicClient) {
+                setTxStatus({ type: "pending", message: `Tx submitted. Waiting for confirmation: ${hash.slice(0, 10)}...` });
+                await publicClient.waitForTransactionReceipt({ hash });
+            }
+
             setTxStatus({
                 type: "success",
                 message: `Redeemed ${redeemAmount} sETH → ETH. Tx: ${hash.slice(0, 10)}...`,
@@ -297,7 +343,14 @@ export default function SethPage() {
                                 Your balance will be encrypted on-chain.
                             </div>
                             <div className="input-group">
-                                <label className="input-group__label">Amount (ETH)</label>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                                    <label className="input-group__label" style={{ marginBottom: 0 }}>Amount (ETH)</label>
+                                    <div style={{ display: "flex", gap: "8px" }}>
+                                        <button className="btn-secondary btn-small" onClick={() => handlePercentage(ethBalance, 25, setDepositAmount)}>25%</button>
+                                        <button className="btn-secondary btn-small" onClick={() => handlePercentage(ethBalance, 50, setDepositAmount)}>50%</button>
+                                        <button className="btn-secondary btn-small" onClick={() => handlePercentage(ethBalance, 100, setDepositAmount, true)}>Max</button>
+                                    </div>
+                                </div>
                                 <input
                                     className="input-group__input"
                                     type="number"
@@ -346,7 +399,14 @@ export default function SethPage() {
                                 />
                             </div>
                             <div className="input-group">
-                                <label className="input-group__label">Amount (sETH)</label>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                                    <label className="input-group__label" style={{ marginBottom: 0 }}>Amount (sETH)</label>
+                                    <div style={{ display: "flex", gap: "8px" }}>
+                                        <button className="btn-secondary btn-small" onClick={() => handlePercentage(userBalance, 25, setTransferAmount)}>25%</button>
+                                        <button className="btn-secondary btn-small" onClick={() => handlePercentage(userBalance, 50, setTransferAmount)}>50%</button>
+                                        <button className="btn-secondary btn-small" onClick={() => handlePercentage(userBalance, 100, setTransferAmount)}>Max</button>
+                                    </div>
+                                </div>
                                 <input
                                     className="input-group__input"
                                     type="number"
@@ -406,7 +466,14 @@ export default function SethPage() {
                                 )}
                             </div>
                             <div className="input-group">
-                                <label className="input-group__label">Amount (sETH)</label>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                                    <label className="input-group__label" style={{ marginBottom: 0 }}>Amount (sETH)</label>
+                                    <div style={{ display: "flex", gap: "8px" }}>
+                                        <button className="btn-secondary btn-small" onClick={() => handlePercentage(userBalance, 25, setRedeemAmount)}>25%</button>
+                                        <button className="btn-secondary btn-small" onClick={() => handlePercentage(userBalance, 50, setRedeemAmount)}>50%</button>
+                                        <button className="btn-secondary btn-small" onClick={() => handlePercentage(userBalance, 100, setRedeemAmount)}>Max</button>
+                                    </div>
+                                </div>
                                 <input
                                     className="input-group__input"
                                     type="number"

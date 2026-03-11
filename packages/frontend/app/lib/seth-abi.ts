@@ -4,14 +4,13 @@ export const SHIELDED_ETH_ABI = [
         stateMutability: "payable",
         type: "constructor",
     },
-    // ── SRC-20 Events (encrypted amount format) ──────────────
+    // ── SRC-20 Events ──────────────────────────────────────────────
     {
         anonymous: false,
         inputs: [
             { indexed: true, name: "from", type: "address" },
             { indexed: true, name: "to", type: "address" },
-            { indexed: true, name: "encryptKeyHash", type: "bytes32" },
-            { indexed: false, name: "encryptedAmount", type: "bytes" },
+            { indexed: false, name: "amount", type: "suint256" },
         ],
         name: "Transfer",
         type: "event",
@@ -21,8 +20,7 @@ export const SHIELDED_ETH_ABI = [
         inputs: [
             { indexed: true, name: "owner", type: "address" },
             { indexed: true, name: "spender", type: "address" },
-            { indexed: true, name: "encryptKeyHash", type: "bytes32" },
-            { indexed: false, name: "encryptedAmount", type: "bytes" },
+            { indexed: false, name: "amount", type: "suint256" },
         ],
         name: "Approval",
         type: "event",
