@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useReadContract, usePublicClient } from "wagmi";
 import { useShieldedWallet, useSignedReadContract } from "seismic-react";
@@ -179,6 +180,7 @@ export default function Home() {
       <header className="header">
         <div className="header__content">
           <div className="header__badge">Seismic Testnet</div>
+          <Link href="/seth" className="nav-link">sETH Vault →</Link>
           <h1 className="header__title">Discord Stat NFT</h1>
           <p className="header__subtitle">
             View your encrypted Discord activity traits. Only the NFT owner can

@@ -316,3 +316,235 @@ body {
     max-width: 60%;
   }
 }
+
+/* ── sETH Page Styles ─────────────────────────────────────── */
+
+/* Protocol Stats */
+.seth-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border: 2px solid var(--border-color);
+  margin-bottom: 48px;
+}
+
+.seth-stats__item {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.seth-stats__item:first-child {
+  border-right: 2px solid var(--border-color);
+}
+
+.seth-stats__label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.seth-stats__value {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  color: var(--text-primary);
+}
+
+/* Balance Display */
+.seth-balance-row {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (min-width: 640px) {
+  .seth-balance-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.seth-balance-display {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.seth-balance-amount {
+  font-family: var(--font-mono);
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--accent-primary);
+}
+
+.seth-balance-unit {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.seth-balance-hidden {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* Tabs */
+.seth-tabs {
+  display: flex;
+  border-bottom: 2px solid var(--border-color);
+  margin-bottom: 24px;
+  gap: 0;
+}
+
+.seth-tab {
+  flex: 1;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+}
+
+.seth-tab:hover {
+  color: var(--text-primary);
+}
+
+.seth-tab--active {
+  color: var(--accent-primary);
+  border-bottom-color: var(--accent-primary);
+}
+
+/* Form */
+.seth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.seth-form__description {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  padding-bottom: 8px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-group__label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.input-group__input {
+  padding: 12px 16px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.input-group__input:focus {
+  border-color: var(--accent-primary);
+}
+
+.input-group__input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.5;
+}
+
+/* Remove number spinners */
+.input-group__input[type="number"]::-webkit-inner-spin-button,
+.input-group__input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.input-group__input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Button variants */
+.btn-full {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.btn-secondary {
+  padding: 8px 16px;
+  background: transparent;
+  color: var(--accent-primary);
+  border: 1px solid var(--accent-primary);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.btn-secondary:hover {
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+}
+
+.btn-small {
+  align-self: flex-start;
+}
+
+/* Pending status bar */
+.status-bar--pending {
+  border-color: var(--text-secondary);
+  color: var(--text-secondary);
+}
+
+/* How it works text */
+.seth-how-text {
+  font-size: 14px !important;
+}
+
+/* Nav link */
+.nav-link {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent-primary);
+  text-decoration: none;
+  border: 1px solid var(--border-color);
+  padding: 6px 12px;
+  margin-left: 8px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.nav-link:hover {
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+}

@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Seismic Discord Stat — Shielded NFT Viewer",
+  title: "Seismic — Shielded NFT & sETH Vault",
   description:
-    "View your encrypted Discord stat traits. Only NFT owners can decrypt and see their shielded on-chain data.",
+    "View encrypted Discord stat traits and manage shielded ETH (sETH). Powered by Seismic Network.",
 };
 
 import { Providers } from "./providers";
