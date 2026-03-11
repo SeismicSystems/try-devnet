@@ -18,9 +18,19 @@ contract ShieldedETH {
     // ── Public total supply tracker ──────────────────────────────
     uint256 private _totalSupply;
 
-    // ── Events (SRC-20 standard) ─────────────────────────────────
-    event Transfer(address indexed from, address indexed to, uint256 amount);
-    event Approval(address indexed owner, address indexed spender, uint256 amount);
+    // ── SRC-20 Events (encrypted amounts) ────────────────────────
+    event Transfer(
+        address indexed from,
+        address indexed to,
+        bytes32 indexed encryptKeyHash,
+        bytes encryptedAmount
+    );
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        bytes32 indexed encryptKeyHash,
+        bytes encryptedAmount
+    );
     event Deposit(address indexed from, uint256 amount);
     event Redeem(address indexed from, address indexed to, uint256 amount);
 
@@ -61,7 +71,6 @@ contract ShieldedETH {
         _balances[msg.sender] = _balances[msg.sender] - amount;
         _balances[to] = _balances[to] + amount;
 
-        emit Transfer(msg.sender, to, uint256(amount));
         return true;
     }
 
@@ -74,7 +83,6 @@ contract ShieldedETH {
 
         _allowances[msg.sender][spender] = amount;
 
-        emit Approval(msg.sender, spender, uint256(amount));
         return true;
     }
 
@@ -93,7 +101,6 @@ contract ShieldedETH {
         _balances[to] = _balances[to] + amount;
         _allowances[from][msg.sender] = _allowances[from][msg.sender] - amount;
 
-        emit Transfer(from, to, uint256(amount));
         return true;
     }
 
@@ -116,7 +123,6 @@ contract ShieldedETH {
         _totalSupply += msg.value;
 
         emit Deposit(msg.sender, msg.value);
-        emit Transfer(address(0), msg.sender, msg.value);
     }
 
     /// @notice Burn sETH tokens and receive ETH at the specified address.
@@ -135,7 +141,6 @@ contract ShieldedETH {
         (bool success, ) = to.call{value: plainAmount}("");
         require(success, "ETH transfer failed");
 
-        emit Transfer(msg.sender, address(0), uint256(amount));
         emit Redeem(msg.sender, to, plainAmount);
     }
 
@@ -151,6 +156,5 @@ contract ShieldedETH {
         _balances[msg.sender] = _balances[msg.sender] + suint256(msg.value);
         _totalSupply += msg.value;
         emit Deposit(msg.sender, msg.value);
-        emit Transfer(address(0), msg.sender, msg.value);
     }
 }

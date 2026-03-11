@@ -49,7 +49,7 @@ export default function SethPage() {
     } = useSignedReadContract({
         abi: SHIELDED_ETH_ABI,
         address: SETH_CONTRACT_ADDRESS,
-        functionName: "getBalance",
+        functionName: "balanceOf",
     });
 
     const [userBalance, setUserBalance] = useState<bigint | null>(null);
