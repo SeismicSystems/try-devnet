@@ -4,7 +4,7 @@ export const SHIELDED_ETH_ABI = [
         stateMutability: "payable",
         type: "constructor",
     },
-    // ── SRC-20 Events (encrypted amounts) ────────────────────
+    // ── SRC-20 Events (encrypted amount format) ──────────────
     {
         anonymous: false,
         inputs: [

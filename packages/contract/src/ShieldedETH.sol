@@ -18,7 +18,7 @@ contract ShieldedETH {
     // ── Public total supply tracker ──────────────────────────────
     uint256 private _totalSupply;
 
-    // ── SRC-20 Events (encrypted amounts) ────────────────────────
+    // ── SRC-20 Events (encrypted amount format) ──────────────────
     event Transfer(
         address indexed from,
         address indexed to,
@@ -40,6 +40,12 @@ contract ShieldedETH {
             _balances[msg.sender] = suint256(msg.value);
             _totalSupply = msg.value;
             emit Deposit(msg.sender, msg.value);
+            emit Transfer(
+                address(0),
+                msg.sender,
+                keccak256(abi.encodePacked(msg.value)),
+                abi.encodePacked(msg.value)
+            );
         }
     }
 
@@ -53,16 +59,11 @@ contract ShieldedETH {
     }
 
     /// @notice Get your own sETH balance (SRC-20: no address arg, uses msg.sender).
-    ///         Must use signed read — proves identity.
     function balanceOf() external view returns (uint256) {
         return uint256(_balances[msg.sender]);
     }
 
-    /// @notice Transfer sETH to another address.
-    ///         Amount is shielded (suint256) — encrypted on-chain.
-    /// @param to     Recipient address.
-    /// @param amount Amount of sETH to transfer (shielded).
-    /// @return success Always true if no revert.
+    /// @notice Transfer sETH to another address (shielded amount).
     function transfer(address to, suint256 amount) external returns (bool) {
         require(to != address(0), "Transfer to zero address");
         require(to != msg.sender, "Cannot transfer to yourself");
@@ -71,26 +72,32 @@ contract ShieldedETH {
         _balances[msg.sender] = _balances[msg.sender] - amount;
         _balances[to] = _balances[to] + amount;
 
+        uint256 plain = uint256(amount);
+        emit Transfer(
+            msg.sender,
+            to,
+            keccak256(abi.encodePacked(plain)),
+            abi.encodePacked(plain)
+        );
         return true;
     }
 
     /// @notice Approve a spender to transfer sETH on your behalf.
-    /// @param spender Address to approve.
-    /// @param amount  Shielded allowance amount.
-    /// @return success Always true if no revert.
     function approve(address spender, suint256 amount) external returns (bool) {
         require(spender != address(0), "Approve to zero address");
-
         _allowances[msg.sender][spender] = amount;
 
+        uint256 plain = uint256(amount);
+        emit Approval(
+            msg.sender,
+            spender,
+            keccak256(abi.encodePacked(plain)),
+            abi.encodePacked(plain)
+        );
         return true;
     }
 
     /// @notice Transfer sETH from an approved account.
-    /// @param from   Address to transfer from.
-    /// @param to     Recipient address.
-    /// @param amount Shielded amount to transfer.
-    /// @return success Always true if no revert.
     function transferFrom(address from, address to, suint256 amount) external returns (bool) {
         require(from != address(0), "Transfer from zero address");
         require(to != address(0), "Transfer to zero address");
@@ -101,11 +108,17 @@ contract ShieldedETH {
         _balances[to] = _balances[to] + amount;
         _allowances[from][msg.sender] = _allowances[from][msg.sender] - amount;
 
+        uint256 plain = uint256(amount);
+        emit Transfer(
+            from,
+            to,
+            keccak256(abi.encodePacked(plain)),
+            abi.encodePacked(plain)
+        );
         return true;
     }
 
     /// @notice Check your allowance for a spender (signed read).
-    /// @param spender Address of the spender.
     function allowance(address spender) external view returns (uint256) {
         return uint256(_allowances[msg.sender][spender]);
     }
@@ -115,7 +128,6 @@ contract ShieldedETH {
     // ══════════════════════════════════════════════════════════════
 
     /// @notice Deposit ETH and mint sETH tokens 1:1.
-    ///         sETH tokens are minted to the depositor's address.
     function deposit() external payable {
         require(msg.value > 0, "Must deposit > 0 ETH");
 
@@ -123,12 +135,15 @@ contract ShieldedETH {
         _totalSupply += msg.value;
 
         emit Deposit(msg.sender, msg.value);
+        emit Transfer(
+            address(0),
+            msg.sender,
+            keccak256(abi.encodePacked(msg.value)),
+            abi.encodePacked(msg.value)
+        );
     }
 
     /// @notice Burn sETH tokens and receive ETH at the specified address.
-    ///         Can redeem to a different wallet.
-    /// @param to     Address to receive the ETH.
-    /// @param amount Amount of sETH to burn (shielded).
     function redeem(address payable to, suint256 amount) external {
         require(to != address(0), "Cannot redeem to zero address");
         require(_balances[msg.sender] >= amount, "Insufficient sETH balance");
@@ -141,12 +156,17 @@ contract ShieldedETH {
         (bool success, ) = to.call{value: plainAmount}("");
         require(success, "ETH transfer failed");
 
+        emit Transfer(
+            msg.sender,
+            address(0),
+            keccak256(abi.encodePacked(plainAmount)),
+            abi.encodePacked(plainAmount)
+        );
         emit Redeem(msg.sender, to, plainAmount);
     }
 
     // ── Public Reads ─────────────────────────────────────────────
 
-    /// @notice Get the ETH held by this contract.
     function contractBalance() external view returns (uint256) {
         return address(this).balance;
     }
@@ -156,5 +176,11 @@ contract ShieldedETH {
         _balances[msg.sender] = _balances[msg.sender] + suint256(msg.value);
         _totalSupply += msg.value;
         emit Deposit(msg.sender, msg.value);
+        emit Transfer(
+            address(0),
+            msg.sender,
+            keccak256(abi.encodePacked(msg.value)),
+            abi.encodePacked(msg.value)
+        );
     }
 }
