@@ -91,6 +91,12 @@ Deploy the ShieldedETH (sETH) contract with an initial liquidity of `0.01 ETH`:
 bash deploy.sh seth
 ```
 
+Deploy the included simple Counter example:
+
+```bash
+bash deploy.sh --Counter -- --constructor-args 0
+```
+
 Deploy any custom contract located in `packages/contract/src`:
 
 ```bash
@@ -142,6 +148,33 @@ nano packages/contract/src/MyToken.sol
 bash deploy.sh --MyToken.sol
 ```
 
+Included `Counter.sol` example:
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+contract Counter {
+    suint256 private number;
+
+    constructor(uint256 initialNumber) {
+        number = suint256(initialNumber);
+    }
+
+    function setNumber(suint256 newNumber) external {
+        number = newNumber;
+    }
+
+    function increment() external {
+        number = number + suint256(1);
+    }
+
+    function getNumber() external view returns (uint256) {
+        return uint256(number);
+    }
+}
+```
+
 ## 4. Contract Address Outputs
 
 Upon successful deployment, the contract address is saved in:
@@ -179,6 +212,7 @@ Frequently used options:
 bash deploy.sh nft --legacy --gas-price 10000000000
 bash deploy.sh nft --nonce 12 --legacy --gas-price 10000000000
 bash deploy.sh seth --output my-seth.txt
+bash deploy.sh --Counter -- --constructor-args 0
 bash deploy.sh --SeismicNFT
 bash deploy.sh --My.sol --rpc-url "$RPC_URL"
 bash deploy.sh --file MyFile.sol --contract-name MyContract
