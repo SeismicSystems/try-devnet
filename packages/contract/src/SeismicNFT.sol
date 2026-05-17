@@ -30,7 +30,7 @@ contract SeismicDiscordStat is ERC721URIStorage, Ownable {
         _nextTokenId = suint256(1);
 
         // Auto-mint 1 example NFT to deployer with sample stats
-        _safeMint(msg.sender, 1);
+        _mint(msg.sender, 1);
         _setTokenURI(1, "https://gateway.pinata.cloud/ipfs/QmZg5tHovzDnZPBa11iWSkv4GqSPqrEBVtUGmAq5FCxAbi");
         _artCount[1] = suint256(10);
         _tweetCount[1] = suint256(25);
