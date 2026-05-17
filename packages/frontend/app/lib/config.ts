@@ -10,8 +10,8 @@ export const seismicTestnet = defineChain({
     },
     rpcUrls: {
         default: {
-            http: ["https://gcp-2.seismictest.net/rpc"],
-            webSocket: ["wss://gcp-2.seismictest.net/ws"],
+            http: ["https://testnet-1.seismictest.net/rpc"],
+            webSocket: ["wss://testnet-1.seismictest.net/ws"],
         },
     },
     blockExplorers: {
