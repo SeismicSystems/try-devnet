@@ -8,7 +8,7 @@ contract ShieldedETHScript is Script {
     ShieldedETH public shieldedETH;
 
     function run() public {
-        uint256 deployerPrivateKey = vm.envUint("PRIVKEY");
+        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
 
         shieldedETH = new ShieldedETH();

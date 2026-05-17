@@ -1,6 +1,10 @@
 #!/bin/bash
 
-# Source all configuration from .env
-if [ -f "$(dirname "$0")/.env" ]; then
-    source "$(dirname "$0")/.env"
+# Source all configuration from the repository root .env.
+CONFIG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$CONFIG_DIR/.env" ]; then
+    source "$CONFIG_DIR/.env"
 fi
+
+export RPC_URL="${RPC_URL:-https://gcp-1.seismictest.net/rpc}"
+export EXPLORER_URL="${EXPLORER_URL:-https://seismic-testnet.socialscan.io}"
