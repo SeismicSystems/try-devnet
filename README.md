@@ -94,7 +94,7 @@ bash deploy.sh seth
 Deploy the included simple Counter example:
 
 ```bash
-bash deploy.sh --Counter -- --constructor-args 0
+bash deploy.sh --Counter.sol
 ```
 
 Deploy any custom contract located in `packages/contract/src`:
@@ -157,10 +157,6 @@ pragma solidity ^0.8.20;
 contract Counter {
     suint256 private number;
 
-    constructor(uint256 initialNumber) {
-        number = suint256(initialNumber);
-    }
-
     function setNumber(suint256 newNumber) external {
         number = newNumber;
     }
@@ -212,7 +208,7 @@ Frequently used options:
 bash deploy.sh nft --legacy --gas-price 10000000000
 bash deploy.sh nft --nonce 12 --legacy --gas-price 10000000000
 bash deploy.sh seth --output my-seth.txt
-bash deploy.sh --Counter -- --constructor-args 0
+bash deploy.sh --Counter.sol
 bash deploy.sh --SeismicNFT
 bash deploy.sh --My.sol --rpc-url "$RPC_URL"
 bash deploy.sh --file MyFile.sol --contract-name MyContract

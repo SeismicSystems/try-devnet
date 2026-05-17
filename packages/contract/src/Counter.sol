@@ -6,10 +6,6 @@ contract Counter {
 
     event NumberChanged(uint256 newNumber);
 
-    constructor(uint256 initialNumber) {
-        number = suint256(initialNumber);
-    }
-
     function setNumber(suint256 newNumber) external {
         number = newNumber;
         emit NumberChanged(uint256(newNumber));
