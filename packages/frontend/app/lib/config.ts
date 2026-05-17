@@ -1,5 +1,14 @@
 import { defineChain } from "viem";
 
+const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL;
+const wsUrl = process.env.NEXT_PUBLIC_WS_URL;
+const explorerUrl =
+    process.env.NEXT_PUBLIC_EXPLORER_URL || "https://seismic-testnet.socialscan.io";
+
+if (!rpcUrl) {
+    throw new Error("Missing NEXT_PUBLIC_RPC_URL in frontend environment");
+}
+
 export const seismicTestnet = defineChain({
     id: 5124,
     name: "Seismic Testnet",
@@ -10,14 +19,14 @@ export const seismicTestnet = defineChain({
     },
     rpcUrls: {
         default: {
-            http: ["https://gcp-1.seismictest.net/rpc"],
-            webSocket: ["wss://gcp-1.seismictest.net/ws"],
+            http: [rpcUrl],
+            ...(wsUrl ? { webSocket: [wsUrl] } : {}),
         },
     },
     blockExplorers: {
         default: {
             name: "SocialScan",
-            url: "https://seismic-testnet.socialscan.io",
+            url: explorerUrl,
         },
     },
 });

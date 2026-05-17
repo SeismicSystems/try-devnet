@@ -6,7 +6,7 @@ import "@rainbow-me/rainbowkit/styles.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider } from "wagmi";
 import { ShieldedWalletProvider } from "seismic-react";
-import { seismicTestnet } from "seismic-react/rainbowkit";
+import { seismicTestnet } from "./lib/config";
 
 // Singleton: create config only once across hot reloads
 let _config: ReturnType<typeof getDefaultConfig> | null = null;
