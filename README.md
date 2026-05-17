@@ -99,6 +99,18 @@ bash deploy.sh --MyContract.sol
 
 The command above looks for `packages/contract/src/MyContract.sol` and deploys the `MyContract` contract.
 
+The `.sol` extension can be omitted:
+
+```bash
+bash deploy.sh --MyContract
+```
+
+If the file contains exactly one deployable `contract`, the script auto-detects the contract name. For example, this deploys the `SeismicDiscordStat` contract from `SeismicNFT.sol`:
+
+```bash
+bash deploy.sh --SeismicNFT
+```
+
 If the file name and the contract name differ:
 
 ```bash
@@ -167,6 +179,7 @@ Frequently used options:
 bash deploy.sh nft --legacy --gas-price 10000000000
 bash deploy.sh nft --nonce 12 --legacy --gas-price 10000000000
 bash deploy.sh seth --output my-seth.txt
+bash deploy.sh --SeismicNFT
 bash deploy.sh --My.sol --rpc-url "$RPC_URL"
 bash deploy.sh --file MyFile.sol --contract-name MyContract
 ```

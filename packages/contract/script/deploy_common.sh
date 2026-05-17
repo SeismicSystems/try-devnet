@@ -10,8 +10,10 @@ Usage:
 Targets:
   nft                         Deploy src/SeismicNFT.sol:SeismicDiscordStat
   seth                        Deploy src/ShieldedETH.sol:ShieldedETH with 0.01 ETH value
-  <File.sol>                  Deploy src/File.sol:File
+  <File.sol>                  Deploy the contract found in src/File.sol
+  <File>                      Same as <File.sol>
   --<File.sol>                Same as <File.sol>
+  --<File>                    Same as <File.sol>
   <path.sol:ContractName>     Deploy any contract under packages/contract
 
 Options:
@@ -37,6 +39,7 @@ Environment:
 Examples:
   bash deploy.sh nft
   bash deploy.sh seth
+  bash deploy.sh --SeismicNFT
   bash deploy.sh --MyToken.sol
   bash deploy.sh --file MyToken.sol
   bash deploy.sh --file MyFile.sol --contract-name MyContract
@@ -63,6 +66,12 @@ resolve_sol_file_target() {
   local file_name
   local contract_name
   local contract_file
+
+  DEPLOY_TARGET_KIND="sol_file"
+
+  if [[ "$sol_file" != *.sol ]]; then
+    sol_file="$sol_file.sol"
+  fi
 
   file_name="${sol_file##*/}"
   contract_name="${DEPLOY_CONTRACT_NAME_OVERRIDE:-${file_name%.sol}}"
@@ -96,6 +105,7 @@ resolve_target() {
       fi
       ;;
     *:*)
+      DEPLOY_TARGET_KIND="full_path"
       DEPLOY_CONTRACT_PATH="$target"
       DEPLOY_OUTPUT_FILE="$(echo "$target" | awk -F: '{print $2}').txt"
       DEPLOY_LABEL="$(echo "$target" | awk -F: '{print $2}')"
@@ -104,15 +114,14 @@ resolve_target() {
       resolve_sol_file_target "$target"
       ;;
     *)
-      echo "Unknown deploy target: $target" >&2
-      echo "Use 'nft', 'seth', '<File.sol>', or '<path.sol:ContractName>'." >&2
-      exit 1
+      resolve_sol_file_target "$target"
       ;;
   esac
 }
 
 parse_deploy_args() {
   DEPLOY_TARGET=""
+  DEPLOY_TARGET_KIND="preset"
   DEPLOY_CONTRACT_NAME_OVERRIDE=""
   DEPLOY_OUTPUT_FILE=""
   DEPLOY_OUTPUT_OVERRIDE=""
@@ -222,6 +231,13 @@ parse_deploy_args() {
         SKIP_INSTALL=1
         shift
         ;;
+      --)
+        shift
+        while [ "$#" -gt 0 ]; do
+          DEPLOY_EXTRA_ARGS+=("$1")
+          shift
+        done
+        ;;
       --*.sol)
         if [ -n "$DEPLOY_TARGET" ]; then
           echo "Only one deploy target can be provided." >&2
@@ -230,12 +246,18 @@ parse_deploy_args() {
         DEPLOY_TARGET="${1#--}"
         shift
         ;;
-      --)
+      --*)
+        target_candidate="${1#--}"
+        if [[ "$target_candidate" == *-* || "$target_candidate" == *=* ]]; then
+          echo "Unknown option: $1" >&2
+          exit 1
+        fi
+        if [ -n "$DEPLOY_TARGET" ]; then
+          echo "Only one deploy target can be provided." >&2
+          exit 1
+        fi
+        DEPLOY_TARGET="$target_candidate"
         shift
-        while [ "$#" -gt 0 ]; do
-          DEPLOY_EXTRA_ARGS+=("$1")
-          shift
-        done
         ;;
       -*)
         echo "Unknown option: $1" >&2
@@ -256,6 +278,41 @@ parse_deploy_args() {
   if [ -n "$DEPLOY_OUTPUT_OVERRIDE" ]; then
     DEPLOY_OUTPUT_FILE="$DEPLOY_OUTPUT_OVERRIDE"
   fi
+}
+
+detect_contract_name() {
+  local source_file="$1"
+  local contracts
+  local contract_count
+  local contract_name
+
+  contracts=$(
+    grep -E '^[[:space:]]*contract[[:space:]]+[A-Za-z_][A-Za-z0-9_]*' "$source_file" \
+      | sed -E 's/^[[:space:]]*contract[[:space:]]+([A-Za-z_][A-Za-z0-9_]*).*/\1/' \
+      || true
+  )
+  contract_count=$(printf '%s\n' "$contracts" | sed '/^$/d' | wc -l | tr -d ' ')
+
+  if [ "$contract_count" = "1" ]; then
+    contract_name=$(printf '%s\n' "$contracts" | sed '/^$/d' | head -n 1)
+    DEPLOY_CONTRACT_PATH="$source_file:$contract_name"
+    DEPLOY_LABEL="$contract_name"
+    if [ -z "$DEPLOY_OUTPUT_OVERRIDE" ]; then
+      DEPLOY_OUTPUT_FILE="$contract_name.txt"
+    fi
+    return
+  fi
+
+  if [ "$contract_count" = "0" ]; then
+    echo "Could not auto-detect a deployable contract in packages/contract/$source_file." >&2
+    echo "Use --contract-name <Name> if the file contains an abstract contract pattern or generated contract." >&2
+    exit 1
+  fi
+
+  echo "Multiple deployable contracts found in packages/contract/$source_file:" >&2
+  printf '%s\n' "$contracts" | sed '/^$/d' >&2
+  echo "Use --contract-name <Name> to choose one." >&2
+  exit 1
 }
 
 ensure_contract_dependencies() {
@@ -415,6 +472,10 @@ run_deploy_cli() {
   if [ ! -f "$contract_source" ]; then
     echo "Contract file not found: packages/contract/$contract_source" >&2
     exit 1
+  fi
+
+  if [ "$DEPLOY_TARGET_KIND" = "sol_file" ] && [ -z "$DEPLOY_CONTRACT_NAME_OVERRIDE" ]; then
+    detect_contract_name "$contract_source"
   fi
 
   echo "Deploying $DEPLOY_LABEL..."
