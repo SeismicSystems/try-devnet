@@ -38,7 +38,7 @@ ssolc --version
 Clone the repository and navigate to the project root:
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/rizkygm23/try-devnet
 cd try-devnet
 ```
 
