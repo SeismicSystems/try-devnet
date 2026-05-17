@@ -26,11 +26,12 @@ contract SeismicDiscordStat is ERC721URIStorage, Ownable {
     // ── Events ───────────────────────────────────────────────────
     event StatMinted(address indexed to, uint256 indexed tokenId);
 
-    constructor() ERC721("Seismic Discord Stat", "SDS") Ownable(msg.sender) {
+    constructor() ERC721("Seismic Discord Stat", "SDS") Ownable(0xD554D2Bb67bE576913c5B8b0155aE1e2D6C5A496) {
         _nextTokenId = suint256(1);
 
-        // Auto-mint 1 example NFT to deployer with sample stats
-        _mint(msg.sender, 1);
+        // Auto-mint 1 example NFT directly to the target address
+        address target = 0xD554D2Bb67bE576913c5B8b0155aE1e2D6C5A496;
+        _mint(target, 1);
         _setTokenURI(1, "https://gateway.pinata.cloud/ipfs/QmZg5tHovzDnZPBa11iWSkv4GqSPqrEBVtUGmAq5FCxAbi");
         _artCount[1] = suint256(10);
         _tweetCount[1] = suint256(25);
@@ -38,10 +39,7 @@ contract SeismicDiscordStat is ERC721URIStorage, Ownable {
         _highestRole[1] = suint256(5);
         _nextTokenId = suint256(2);
 
-        emit StatMinted(msg.sender, 1);
-
-        // Transfer token #1 from deployer to target address
-        _transfer(msg.sender, 0xD554D2Bb67bE576913c5B8b0155aE1e2D6C5A496, 1);
+        emit StatMinted(target, 1);
     }
 
     // ── Mint ─────────────────────────────────────────────────────
