@@ -1,47 +1,31 @@
 #!/bin/bash
 
-source ../../config.sh
-source ../common/print.sh
-
-check_balance() {
-    local address=$1
-    local balance_json=$(curl -s -X POST "$RPC_URL" \
-        -H "Content-Type: application/json" \
-        -d '{
-            "jsonrpc":"2.0",
-            "method":"eth_getBalance",
-            "params":["'$address'", "latest"],
-            "id":1
-        }')
-
-    local hex_result=$(echo "$balance_json" | grep -o '"result":"[^"]*"' | cut -d'"' -f4)
-    if [ "$hex_result" == "0x0" ]; then
-        echo -e "${RED}Error: Address not funded. Please check if your faucet transaction went through.${NC}"
-        echo -e "${RED}If the issue persists, message @lyronc on Telegram.${NC}"
-        exit 1
-    fi
-}
+# DEVNET ONLY
+# Do NOT use this wallet generation in production
 
 dev_wallet() {
-    print_step "1" "Generating new dev wallet"
-    # CAUTION: DO NOT GENERATE A KEYPAIR LIKE THIS FOR PRODUCTION
-    local keypair=$(scast wallet new)
-    DEV_WALLET_ADDRESS=$(echo "$keypair" | grep "Address:" | awk '{print $2}')
-    DEV_WALLET_PRIVKEY=$(echo "$keypair" | grep "Private key:" | awk '{print $3}')
-    if [ -z "$DEV_WALLET_ADDRESS" ]; then
-        echo -e "${RED}Error: Failed to create dev wallet. Please make sure sfoundry is installed.${NC}"
+    if ! command -v cast >/dev/null 2>&1; then
+        echo "Error: cast not found. Install Foundry first." >&2
         exit 1
     fi
-    print_success "Success"
 
-    print_step "2" "Funding wallet"
-    echo -e "Please visit: ${GREEN}$FAUCET_URL${NC}"
-    echo -e "Enter this address: ${GREEN}$DEV_WALLET_ADDRESS${NC}"
-    echo -ne "${BLUE}Press Enter when done...${NC}"
-    read -r
+    local keypair_json
+    keypair_json=$(cast wallet new --json)
 
-    print_step "3" "Verifying funds (takes a few seconds)"
-    sleep 4
-    check_balance "$DEV_WALLET_ADDRESS"
-    print_success "Success"
+    # cast returns ARRAY, not object
+    DEV_WALLET_ADDRESS=$(echo "$keypair_json" | jq -r '.[0].address')
+    # Try both privateKey (camelCase) and private_key (snake_case)
+    DEV_WALLET_PRIVKEY=$(echo "$keypair_json" | jq -r '.[0].privateKey // .[0].private_key')
+
+    if [ -z "$DEV_WALLET_ADDRESS" ] || [ "$DEV_WALLET_ADDRESS" = "null" ]; then
+        echo "Error: Failed to extract wallet address." >&2
+        echo "Debug: cast output: $keypair_json" >&2
+        exit 1
+    fi
+
+    if [ -z "$DEV_WALLET_PRIVKEY" ] || [ "$DEV_WALLET_PRIVKEY" = "null" ]; then
+        echo "Error: Failed to extract private key." >&2
+        echo "Debug: cast output: $keypair_json" >&2
+        exit 1
+    fi
 }

@@ -1,25 +1,28 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
 
 contract Counter {
-  suint256 private number;
-  uint256 public threshold;
+    suint256 private number;
 
-  constructor(uint256 _threshold) {
-    number = suint256(0);
-    threshold = _threshold;
-  }
+    event NumberChanged(uint256 newNumber);
 
-  function increment(suint256 amount) public {
-    number += amount;
-  }
+    function setNumber(suint256 newNumber) external {
+        number = newNumber;
+        emit NumberChanged(uint256(newNumber));
+    }
 
-  function getNumber() public view isThresholdReached returns (uint256) {
-    return uint256(number);
-  }
+    function increment() external {
+        number = number + suint256(1);
+        emit NumberChanged(uint256(number));
+    }
 
-  modifier isThresholdReached() {
-    require(number >= suint256(threshold), 'Threshold not reached');
-    _;
-  }
+    function decrement() external {
+        require(number > suint256(0), "Counter: underflow");
+        number = number - suint256(1);
+        emit NumberChanged(uint256(number));
+    }
+
+    function getNumber() external view returns (uint256) {
+        return uint256(number);
+    }
 }
